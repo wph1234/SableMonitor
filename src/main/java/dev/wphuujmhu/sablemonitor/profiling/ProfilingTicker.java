@@ -75,14 +75,15 @@ public final class ProfilingTicker {
     }
 
     private static @NotNull StringBuilder createSb(NativePhysicsProfile.Snapshot snapshot) {
+        // User-facing wording: narrow phase -> "collision", solver -> "physics".
         final StringBuilder sb = new StringBuilder();
         sb.append(String.format(
-                "probe t=%d step=%.3fms/tick substeps=%d broad=%.3f narrow=%.3f island=%.3f solve=%.3f",
+                "probe t=%d step=%.3fms/tick substeps=%d broad=%.3f collision=%.3f islands=%.3f physics=%.3f",
                 ticks, snapshot.stepMs(), snapshot.substeps(), snapshot.broadMs(),
                 snapshot.narrowMs(), snapshot.islandMs(), snapshot.solverMs()));
 
         for (final NativePhysicsProfile.Entry entry : snapshot.entries()) {
-            sb.append(String.format(" | id=%d narrow~=%.3f solve~=%.3f pairs=%d island=%d",
+            sb.append(String.format(" | id=%d collision~=%.3f physics~=%.3f pairs=%d island=%d",
                     entry.id(), entry.narrowMs(), entry.solverMs(), entry.pairs(), entry.islandMax()));
         }
         return sb;

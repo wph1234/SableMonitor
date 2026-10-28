@@ -1,5 +1,5 @@
 {
-  "commands.sablemonitor.dump.general1": "Physics %.3f mspt (%d substep(s), %.3f ms/substep)",
+  "commands.sablemonitor.dump.general1": "Physics step(s) %.3f ms/tick (%d substep(s), %.3f ms/substep)",
   "commands.sablemonitor.dump.general2": "[broad %.3f ms | collision %.3f ms | islands %.3f ms | physics %.3f ms | ccd %.3f ms]",
   "commands.sablemonitor.dump.label": "collision%s  physics%s    total%s   pairs  island",
 

@@ -120,7 +120,13 @@ public final class NativePhysicsProfile {
 
     // --- data ---------------------------------------------------------------------------------
 
-    /** One sub-level's sample for the tick that was just read. */
+    /**
+     * One sublevel's sample for the tick that was just read.
+     * <p>
+     * Naming: {@code narrowMs} is rapier's narrow phase and is shown to players as
+     * <em>collision</em>; {@code solverMs} is the constraint solver and is shown as
+     * <em>physics</em>. Only the display wording is simplified - the measurement is unchanged.
+     */
     public record Entry(int id, double narrowMs, double solverMs, int pairs, int islandMax) {
         public double totalMs() {
             return this.narrowMs + this.solverMs;

@@ -101,7 +101,7 @@ Java_dev_wphuujmhu_sablemonitor_natives_NativePhysicsProfile_takeProfile0
 | Gradle 打包 | `gradlew build --offline` | ✅ `sablemonitor-0.5.0-alpha.jar` 794,815 B，含 DLL |
 | jar 内 DLL 与构建产物一致 | SHA-256 对比 | ✅ `2edb358a…` 一致 |
 | Sable 实际加载我们的 DLL | `gradlew runVerifyServer` | ✅ `loaded patched rapier natives from ...\sable_rapier_x86_64_windows-2edb358a.dll` |
-| 采集有非 0 数据 | 同上 + `-Dsablemonitor.profile=true` | ✅ 每 20 tick：`step≈0.06ms/tick substeps=2 broad=0.003 narrow=0.008 solve=0.045` |
+| 采集有非 0 数据 | 同上 + `-Dsablemonitor.profile=true` | ✅ 每 20 tick：`step≈0.06ms/tick substeps=2 broad=0.003 collision=0.008 islands=0.000 physics=0.045` |
 | 服务端正常启动 | 同上 | ✅ `Done (3.492s)!` |
 
 > 这个空世界出生点附近没有 sub-level，所以 `pairs=0`、没有 per-sub-level 行。
@@ -198,9 +198,18 @@ gradlew runVerifyServer --offline
 `ProfilingTicker` 会每 20 tick 打一行：
 
 ```
-SableMonitor: probe t=1580 step=0.164ms/tick substeps=2 broad=0.003 narrow=0.009 island=0.001 solve=0.147
-  | id=17 narrow~=0.031 solve~=0.284 pairs=9 island=2
+SableMonitor: probe t=1580 step=0.164ms/tick substeps=2 broad=0.003 collision=0.009 islands=0.001 physics=0.147
+  | id=17 collision~=0.031 physics~=0.284 pairs=9 island=2
 ```
+
+> **列名对照**（`natives` 里的字段名保持 rapier 的原始叫法，只有显示和日志用通俗词）：
+>
+> | 显示 / 日志 | 代码（`NativePhysicsProfile`） | rapier 阶段 |
+> |---|---|---|
+> | `collision` | `narrowMs()` | narrow phase，生成接触点 |
+> | `physics` | `solverMs()` | solver，解约束 / 积分 |
+> | `step` | `stepMs()` | `PhysicsPipeline::step` 整段 |
+> | `broad` / `islands` / `ccd` | `broadMs()` / `islandMs()` / `ccdMs()` | 宽相 / island 构建 / CCD |
 
 ---
 
