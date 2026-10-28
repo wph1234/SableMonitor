@@ -2,18 +2,24 @@
 
 这里记录 **实际做出来、能编译、能在游戏里加载** 的那一版，而不是最初的设想稿。
 
-当前状态（Sable 2.0.5 + 重命名后的工程）：
+当前状态（Sable **2.0.6** + 重命名后的工程）：
 
-- Java 包 `dev.wphuujmhu.sablemonitor`，mod id `sablemonitor`，版本 `0.5.0-alpha`
-- 原生库已按 Sable **2.0.5** 的 Rust 源码重新构建（不再是 2.0.3）
-- JNI 导出已改成新包名（`..._sablemonitor_natives_...`）
-- 已在干净的 dedicated server（`runVerifyServer`）上验证：natives 加载、`probe` 日志有非 0 数据
+- Java 包 `dev.wphuujmhu.sablemonitor`，mod id `sablemonitor`，版本 `0.5.0-alpha-sable2.0.6`
+- 原生库按 Sable **2.0.6** 的 Rust 源码构建（`.native-src/sable` 在分支 `patch-2.0.6`）
+- JNI 导出用新包名（`..._sablemonitor_natives_...`）
+- 已在干净的 dedicated server（`run/server` 之外的单开目录）上验证：natives 加载、`probe` 日志有非 0 数据
 
 ```
 src/main/resources/natives/sable_rapier/sable_rapier_x86_64_windows.dll   1,700,352 B (1.62 MiB)
   sha256 2edb358a69de975abb901b8da0636047d9dd88bac38ab7d7516fb99ca22c3d25
   -> 由 .native-src/sable/sable_rapier/src/main/rust/target/release/sable_rapier.dll 拷贝而来
 ```
+
+> **2.0.5 与 2.0.6 的原生库完全一致**，所以上面这个 DLL 同时适用两个版本：
+> jar 里 `natives/sable_rapier/sable_rapier_binaries.zip.l4z` 的 SHA-256 在两个 tag 上都是
+> `986d1edc…`；`sable_rapier/src/main/rust` 两个 tag 之间 `git diff` 为 0 行；
+> 2.0.6 的 Java 侧只改了一个不相关的文件（`TheFasterEntityCollisionContext`）。
+> 只有 Sable 升级到动了 native 的版本时，才需要按 §4 重编。
 
 ---
 
@@ -23,8 +29,8 @@ src/main/resources/natives/sable_rapier/sable_rapier_x86_64_windows.dll   1,700,
 
 | 路径 | 说明 |
 |---|---|
-| `.native-src/rapier` | `ryanhcode/rapier` @ `38e92f1`（= Sable 2.0.5 的 `Cargo.toml` 里 pin 的 rev，两个版本没变） |
-| `.native-src/sable` | `ryanhcode/sable` @ tag `mc1.21.1-2.0.5-neoforge`，本地分支 `patch-2.0.5` |
+| `.native-src/rapier` | `ryanhcode/rapier` @ `38e92f1`（= Sable 2.0.5 / 2.0.6 的 `Cargo.toml` 里 pin 的同一个 rev） |
+| `.native-src/sable` | `ryanhcode/sable` @ tag `mc1.21.1-2.0.6-neoforge`，本地分支 `patch-2.0.6` |
 | `.cargo-home` | 本项目内的 `CARGO_HOME`，避免写 `~/.cargo` |
 
 ### rapier（4 处）
@@ -45,17 +51,17 @@ src/main/resources/natives/sable_rapier/sable_rapier_x86_64_windows.dll   1,700,
 | `rapier/src/lib.rs` | slot 池（`alloc_slot`/`free_slot`）；`createSubLevel` 分配 slot 写入 `rigid_body.user_data`，`removeSubLevel` 回收；`tick()` 结算一个 tick 的窗口；`step()` 累加阶段耗时；文件末尾两个 JNI 导出 |
 | `.cargo/config.toml` | 追加 `[source.crates-io] replace-with = "vendored-sources"`（离线构建用） |
 
-> 2.0.3 → 2.0.5 的官方 Rust 改动只有一处：`lib.rs` 里加了 `LogWriter`（吞掉 stdout 的
-> `BrokenPipe`），并把 `fern` 的输出改成 `.chain(fern::Output::writer(...))`。
-> 这一处已经合并进我们打过补丁的 `lib.rs`；`scene.rs`、`rust-toolchain.toml`、
-> rapier 的 rev 在两个 tag 之间都没变。
+> 官方 Rust 改动史：2.0.3 → 2.0.5 只有一处（`lib.rs` 加 `LogWriter` 吞掉 stdout 的
+> `BrokenPipe`，并把 `fern` 输出改成 `.chain(fern::Output::writer(...))`，已合并进我们打过补丁的
+> `lib.rs`）；**2.0.5 → 2.0.6 的 `sable_rapier/src/main/rust` 没有任何改动**。
+> `scene.rs`、`rust-toolchain.toml`、rapier 的 rev 在三个 tag 之间都没变。
 
 ### Java 侧同步改动
 
 | 文件 | 改动 |
 |---|---|
 | `NativePhysicsProfile` / Rust 导出名 | 包名从 `sublevelmonitor` 改为 `sablemonitor`，JNI 符号随之改变（见 §2.2） |
-| `PatchedNatives` | 解压目录改为镜像 Sable 2.0.5 的 `SableLoaderPlatform.getGameDirectory()`（拿不到就退回 `.sable/natives`）；文件名仍是内容寻址（`-<8 hex>`） |
+| `PatchedNatives` | 解压目录镜像 Sable 2.0.5+ 的 `SableLoaderPlatform.getGameDirectory()`（拿不到就退回 `.sable/natives`）；文件名仍是内容寻址（`-<8 hex>`） |
 | `ProfilingTicker` | 系统属性改为 `-Dsablemonitor.profile[.log]` |
 | `RapierNativeLoaderMixin` | 注入方法改名为 `sablemonitor$usePatchedNatives` |
 
@@ -92,17 +98,19 @@ Java_dev_wphuujmhu_sablemonitor_natives_NativePhysicsProfile_takeProfile0
 
 ---
 
-## 3. 验证结果（重命名 + 2.0.5 之后重跑）
+## 3. 验证结果（Sable 2.0.6 上重跑）
 
 | 验证项 | 方法 | 结果 |
 |---|---|---|
-| rapier 补丁 + sable 补丁能编译 | `cargo build --release`（sable workspace，nightly） | ✅ `Finished release profile in 32s` |
-| DLL 导出符号 | `dumpbin /exports` | ✅ 55 个导出，含上面两个 `sablemonitor` 符号 |
-| Gradle 打包 | `gradlew build --offline` | ✅ `sablemonitor-0.5.0-alpha.jar` 794,815 B，含 DLL |
+| rapier 补丁 + sable 补丁能编译 | `cargo build --release`（sable workspace，nightly） | ✅ 2.0.6 源码树无改动，`Finished release profile` |
+| 2.0.6 原生库与 2.0.5 相同 | 比对 jar 内 `sable_rapier_binaries.zip.l4z` 的 SHA-256 | ✅ 两版都是 `986d1edc…` |
+| DLL 导出符号 | `dumpbin /exports` | ✅ 55 个导出，含两个 `sablemonitor` 符号 |
+| Gradle 打包 | `gradlew build --offline` | ✅ `sablemonitor-0.5.0-alpha-sable2.0.6.jar` 793,500 B，含 DLL |
 | jar 内 DLL 与构建产物一致 | SHA-256 对比 | ✅ `2edb358a…` 一致 |
-| Sable 实际加载我们的 DLL | `gradlew runVerifyServer` | ✅ `loaded patched rapier natives from ...\sable_rapier_x86_64_windows-2edb358a.dll` |
-| 采集有非 0 数据 | 同上 + `-Dsablemonitor.profile=true` | ✅ 每 20 tick：`step≈0.06ms/tick substeps=2 broad=0.003 collision=0.008 islands=0.000 physics=0.045` |
-| 服务端正常启动 | 同上 | ✅ `Done (3.492s)!` |
+| 依赖范围生效 | jar 内 `neoforge.mods.toml` | ✅ `sable` 依赖 `versionRange = "[2.0.6]"`，服务端正常加载 |
+| Sable 2.0.6 加载我们的 DLL | 干净 dedicated server | ✅ `loaded patched rapier natives from ...\sable_rapier_x86_64_windows-2edb358a.dll` |
+| 采集有非 0 数据 | 同上 + `-Dsablemonitor.profile=true` | ✅ 每 20 tick：`step≈0.07ms/tick substeps=2 broad=0.003 collision=0.008 islands=0.000 physics=0.052` |
+| 服务端正常启动 | 同上 | ✅ `Done (3.414s)!`（Mod List: `Sable 2.0.6` / `Sable Monitor 0.5.0-alpha-sable2.0.6`） |
 
 > 这个空世界出生点附近没有 sub-level，所以 `pairs=0`、没有 per-sub-level 行。
 > per-id 行的最后确认仍需要在有 sub-level 的世界里做（见 §5）。
@@ -116,7 +124,7 @@ $ws = "C:\Users\wangl\IdeaProjects\SablelMonitor"
 $env:CARGO_HOME  = "$ws\.cargo-home"
 $env:CARGO_NET_OFFLINE = "true"
 
-# .native-src/sable 在分支 patch-2.0.5（= tag mc1.21.1-2.0.5-neoforge + 我们的补丁）
+# .native-src/sable 在分支 patch-2.0.6（= tag mc1.21.1-2.0.6-neoforge + 我们的补丁）
 # 依赖已 vendored 到 .native-src/sable/sable_rapier/src/main/rust/vendor（169 个 crate）
 cd "$ws\.native-src\sable\sable_rapier\src\main\rust"
 cargo build --release --lib
@@ -134,7 +142,16 @@ cd $ws
 .\gradlew.bat build --offline
 ```
 
-临时换个依赖的最小验证服（`run-verify/` 里没有任何第三方 mod jar）：
+临时换个依赖的最小验证服（`run-verify/` 里没有任何第三方 mod jar）。build.gradle 里默认没有这个
+run config，需要临时加一段（验证完可以删掉）：
+
+```groovy
+verifyServer {
+    server()
+    programArgument '--nogui'
+    gameDirectory = project.file('run-verify')
+}
+```
 
 ```powershell
 $env:JAVA_TOOL_OPTIONS = "-Dsablemonitor.profile=true -Dsablemonitor.profile.log=true"
@@ -235,7 +252,7 @@ git clone https://github.com/ryanhcode/rapier $ws\.native-src\rapier
 git -C $ws\.native-src\rapier checkout 38e92f117590862481a53df6fc69a5d893e29186
 git -C $ws\.native-src\rapier apply $ws\native\patches\rapier-profiling.patch
 
-git clone --branch mc1.21.1-2.0.5-neoforge https://github.com/ryanhcode/sable $ws\.native-src\sable
+git clone --branch mc1.21.1-2.0.6-neoforge https://github.com/ryanhcode/sable $ws\.native-src\sable
 git -C $ws\.native-src\sable apply $ws\native\patches\sable-rapier-profiling.patch
 
 # vendor 目录需要另外生成（见 §4），然后就能 cargo build

@@ -6,7 +6,7 @@
 
 ```
 C:\dev\rapier                     <- ryanhcode/rapier，打了 native/rapier/PATCH.md 的补丁
-C:\dev\sable                      <- ryanhcode/sable，tag mc1.21.1-2.0.5-neoforge
+C:\dev\sable                      <- ryanhcode/sable，tag mc1.21.1-2.0.6-neoforge
 C:\Users\wangl\IdeaProjects\SableMonitor
 ```
 
@@ -56,7 +56,7 @@ cd C:\dev\rapier
 # 用 sable 里 Cargo.toml pin 的同一个 rev
 git checkout <rev>
 
-git clone --branch mc1.21.1-2.0.5-neoforge --depth 1 https://github.com/ryanhcode/sable C:\dev\sable
+git clone --branch mc1.21.1-2.0.6-neoforge --depth 1 https://github.com/ryanhcode/sable C:\dev\sable
 ```
 
 然后按顺序打补丁：
@@ -71,7 +71,7 @@ git -C C:\dev\rapier apply C:\Users\wangl\IdeaProjects\SablelMonitor\native\patc
 git -C C:\dev\sable  apply C:\Users\wangl\IdeaProjects\SablelMonitor\native\patches\sable-rapier-profiling.patch
 ```
 
-当前实际验证过的状态、2.0.5 与 2.0.3 的差异，都记在 `native/README.md`。
+当前实际验证过的状态、2.0.5/2.0.6 与 2.0.3 的差异，都记在 `native/README.md`。
 
 ---
 

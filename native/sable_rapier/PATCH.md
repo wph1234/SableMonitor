@@ -7,10 +7,10 @@
 对象：Sable 源码里 `sable_rapier/src/main/rust/rapier/` 这个 crate。
 
 ```powershell
-git clone --branch mc1.21.1-2.0.5-neoforge --depth 1 https://github.com/ryanhcode/sable C:\dev\sable
+git clone --branch mc1.21.1-2.0.6-neoforge --depth 1 https://github.com/ryanhcode/sable C:\dev\sable
 ```
 
-> 用和你 `gradle.properties` 里 `sable_version=2.0.5` 对应的 tag，保证 Java 侧
+> 用和你 `gradle.properties` 里 `sable_version=2.0.6` 对应的 tag，保证 Java 侧
 > `Rapier3D` 的 native 方法签名和 DLL 完全一致。
 
 改动共 4 处，都在 `sable_rapier/src/main/rust/rapier/` 下。
