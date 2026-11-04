@@ -5,8 +5,8 @@ loaderVersion = "${loader_version_range}" #mandatory
 license = "${mod_license}"
 
 # Fill these in after publishing the repository:
-#issueTrackerURL="https://github.com/<you>/SablelMonitor/issues" #optional
-#displayURL="https://github.com/<you>/SablelMonitor" #optional
+issueTrackerURL="https://github.com/wph1234/SableMonitor/issues"
+displayURL="https://github.com/wph1234/SableMonitor"
 
 [[mods]] #mandatory
 
