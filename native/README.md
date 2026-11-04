@@ -4,7 +4,7 @@
 
 当前状态（Sable **2.0.6** + 重命名后的工程）：
 
-- Java 包 `dev.wphuujmhu.sablemonitor`，mod id `sablemonitor`，版本 `0.5.0-alpha-sable2.0.6`
+- Java 包 `dev.wphuujmhu.sablemonitor`，mod id `sablemonitor`，版本 `0.5.1-alpha-sable2.0.6`
 - 原生库按 Sable **2.0.6** 的 Rust 源码构建（`.native-src/sable` 在分支 `patch-2.0.6`）
 - JNI 导出用新包名（`..._sablemonitor_natives_...`）
 - 已在干净的 dedicated server（`run/server` 之外的单开目录）上验证：natives 加载、`probe` 日志有非 0 数据
@@ -14,6 +14,14 @@ src/main/resources/natives/sable_rapier/sable_rapier_x86_64_windows.dll   1,700,
   sha256 2edb358a69de975abb901b8da0636047d9dd88bac38ab7d7516fb99ca22c3d25
   -> 由 .native-src/sable/sable_rapier/src/main/rust/target/release/sable_rapier.dll 拷贝而来
 ```
+
+> **这个 DLL 不进 git**（`src/main/resources/natives/` 已加进 `.gitignore`），只作为 GitHub Release
+> 附件发布；仓库里只留源码 + 补丁。克隆下来构建时如果没放 DLL，jar 仍能编译，但
+> `/sablemonitor` 会报 "natives are not loaded"（`processResources` 会给警告）。
+>
+> **许可**：DLL 是 Sable（PolyForm Shield 1.0.0）与 Rapier（Apache-2.0）的**修改版构建**，
+> 分发时必须随附 `licenses/` 下的许可原文与 [`../THIRD-PARTY-NOTICES.md`](../THIRD-PARTY-NOTICES.md)；
+> `gradlew build` 已经把这些文件打进 jar 的 `META-INF/`。本仓库自己的代码是 MIT（见 `../LICENSE`）。
 
 > **2.0.5 与 2.0.6 的原生库完全一致**，所以上面这个 DLL 同时适用两个版本：
 > jar 里 `natives/sable_rapier/sable_rapier_binaries.zip.l4z` 的 SHA-256 在两个 tag 上都是
@@ -125,7 +133,7 @@ $env:CARGO_HOME  = "$ws\.cargo-home"
 $env:CARGO_NET_OFFLINE = "true"
 
 # .native-src/sable 在分支 patch-2.0.6（= tag mc1.21.1-2.0.6-neoforge + 我们的补丁）
-# 依赖已 vendored 到 .native-src/sable/sable_rapier/src/main/rust/vendor（169 个 crate）
+# 依赖已 vendored 到 .native-src/sable/sable_rapier/src/main/rust/vendor（170 个 crate）
 cd "$ws\.native-src\sable\sable_rapier\src\main\rust"
 cargo build --release --lib
 
@@ -140,6 +148,11 @@ Copy-Item target\release\sable_rapier.dll `
 # 打包
 cd $ws
 .\gradlew.bat build --offline
+
+# 发版时把 DLL 单独作为 release 附件（它不在 git 里）
+#   upload: src\main\resources\natives\sable_rapier\sable_rapier_x86_64_windows.dll
+# 依赖/许可清单有变动时刷新 crate 表：
+#   python native\tools\notices.py
 ```
 
 临时换个依赖的最小验证服（`run-verify/` 里没有任何第三方 mod jar）。build.gradle 里默认没有这个
@@ -162,9 +175,18 @@ $env:JAVA_TOOL_OPTIONS = "-Dsablemonitor.profile=true -Dsablemonitor.profile.log
 用 schannel 都会 `SEC_E_NO_CREDENTIALS`，只有 Python 的 OpenSSL 能出网）：
 
 ```powershell
-& "C:\Users\wangl\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe" `
-  native\tools\vendor.py "$ws\.native-src\sable\sable_rapier\src\main\rust\Cargo.lock" `
-                         "$ws\.native-src\sable\sable_rapier\src\main\rust\vendor"
+python native\tools\vendor.py `
+  "$ws\.native-src\sable\sable_rapier\src\main\rust\Cargo.lock" `
+  "$ws\.native-src\sable\sable_rapier\src\main\rust\vendor" 8
+```
+
+它按 `Cargo.lock` 里的 `checksum` 校验每个 `.crate`，再解包并写 `.cargo-checksum.json`
+（和 `cargo vendor` 的目录源格式一致）。网络正常时用 `cargo vendor` 效果相同。
+
+依赖集合变化后刷新许可清单里的 crate 表：
+
+```powershell
+python native\tools\notices.py
 ```
 
 git 也要用 openssl 后端：

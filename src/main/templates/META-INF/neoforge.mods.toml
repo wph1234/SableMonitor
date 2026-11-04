@@ -4,7 +4,9 @@ loaderVersion = "${loader_version_range}" #mandatory
 
 license = "${mod_license}"
 
-#issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
+# Fill these in after publishing the repository:
+#issueTrackerURL="https://github.com/<you>/SablelMonitor/issues" #optional
+#displayURL="https://github.com/<you>/SablelMonitor" #optional
 
 [[mods]] #mandatory
 
@@ -16,11 +18,9 @@ displayName = "${mod_name}" #mandatory
 
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 
-#displayURL="https://change.me.to.your.mods.homepage.example.invalid/" #optional
+credits = "Bundled Rapier natives are a modified build of Sable (PolyForm Shield 1.0.0, (c) RyanHCode and contributors) and Rapier (Apache-2.0, (c) Dimforge and contributors). See META-INF/THIRD-PARTY-NOTICES.md."
 
 logoFile="sablemonitor.png"
-
-#credits="" #optional
 
 authors = "${mod_authors}" #optional
 

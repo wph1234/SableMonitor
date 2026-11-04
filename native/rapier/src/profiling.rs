@@ -4,6 +4,9 @@
 //! `https://github.com/ryanhcode/rapier`, rev pinned by Sable). It answers one question:
 //! *which body is burning the physics budget?*
 //!
+//! License: Rapier is Apache-2.0 (© Dimforge and contributors); this file is one of the
+//! modifications described in `THIRD-PARTY-NOTICES.md`.
+//!
 //! # Attribution model
 //!
 //! Rapier has no notion of a "sub-level", so the host (Sable's `sable_rapier` crate) tags each
@@ -13,11 +16,11 @@
 //!
 //! Two sample points are instrumented:
 //!
-//! * **narrow phase** 鈥?one guarded region per collider pair in
+//! * **narrow phase** —one guarded region per collider pair in
 //!   `NarrowPhase::compute_contacts`. The pair's cost is split 50/50 between its two colliders'
 //!   bodies when both are tagged, and charged fully to the tagged side when the other side is
 //!   world geometry.
-//! * **solver** 鈥?one guarded region per island solve in `PhysicsPipeline::step`
+//! * **solver** —one guarded region per island solve in `PhysicsPipeline::step`
 //!   (`solvers.par_iter_mut()`), split evenly among the island's tagged bodies.
 //!
 //! Timers are only taken when profiling is enabled, and accumulation is done with relaxed atomics

@@ -1,0 +1,13 @@
+# Keep generated patch files byte-exact (they are diffed/applied by git and must keep LF).
+*.patch -text
+*.diff -text
+
+# Binaries
+*.dll binary
+*.jar binary
+*.png binary
+*.class binary
+
+# Line endings
+gradlew text eol=lf
+gradlew.bat text eol=crlf

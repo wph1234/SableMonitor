@@ -26,3 +26,12 @@ run-verify
 .native-src/
 .cargo-home/
 
+# Python bytecode (native/tools/*.py)
+__pycache__/
+*.pyc
+
+# The patched native library is distributed as a GitHub release attachment, not in git:
+# it is a ~1.7 MB binary per Sable version. Rebuild it (native/README.md §4) or download it
+# from the release page and drop it here before `gradlew build`.
+src/main/resources/natives/
+
