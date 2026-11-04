@@ -4,9 +4,6 @@
 //! `https://github.com/ryanhcode/rapier`, rev pinned by Sable). It answers one question:
 //! *which body is burning the physics budget?*
 //!
-//! License: Rapier is Apache-2.0 (© Dimforge and contributors); this file is one of the
-//! modifications described in `THIRD-PARTY-NOTICES.md`.
-//!
 //! # Attribution model
 //!
 //! Rapier has no notion of a "sub-level", so the host (Sable's `sable_rapier` crate) tags each
@@ -16,11 +13,12 @@
 //!
 //! Two sample points are instrumented:
 //!
-//! * **narrow phase** —one guarded region per collider pair in
-//!   `NarrowPhase::compute_contacts`. The pair's cost is split 50/50 between its two colliders'
-//!   bodies when both are tagged, and charged fully to the tagged side when the other side is
-//!   world geometry.
-//! * **solver** —one guarded region per island solve in `PhysicsPipeline::step`
+//! * **narrow phase** — one guarded region per collider pair in
+//!   `NarrowPhase::compute_contacts`. When the two colliders belong to different slots the cost is
+//!   split 50/50 between them (including the untagged slot `0`); when both belong to the same slot
+//!   the whole cost goes to it. The pair is counted for every slot involved, so a sub-level resting
+//!   on the ground still reports that pair.
+//! * **solver** — one guarded region per island solve in `PhysicsPipeline::step`
 //!   (`solvers.par_iter_mut()`), split evenly among the island's tagged bodies.
 //!
 //! Timers are only taken when profiling is enabled, and accumulation is done with relaxed atomics
@@ -134,10 +132,34 @@ pub struct SlotSample {
 ///
 /// Call this once per game tick; it is the wrong thing to call from inside the physics step.
 pub fn take() -> Vec<SlotSample> {
+    take_filtered(|_| true)
+}
+
+/// Reads and clears only the slots accepted by `owner`, leaving every other slot untouched.
+///
+/// This is what lets several `PhysicsScene`s share one sample table: each scene consumes its own
+/// slots when its tick ends, and the other dimensions keep accumulating theirs.
+pub fn take_filtered<F>(owner: F) -> Vec<SlotSample>
+where
+    F: Fn(u32) -> bool,
+{
     let s = store();
     let mut out = Vec::new();
 
     for i in 0..MAX_SLOTS {
+        // Cheap early-out: nothing has ever been recorded for this slot.
+        if s.narrow_ns[i].load(Ordering::Relaxed) == 0
+            && s.solver_ns[i].load(Ordering::Relaxed) == 0
+            && s.pairs[i].load(Ordering::Relaxed) == 0
+            && s.island_max[i].load(Ordering::Relaxed) == 0
+        {
+            continue;
+        }
+
+        if !owner(i as u32) {
+            continue;
+        }
+
         let narrow = s.narrow_ns[i].swap(0, Ordering::Relaxed);
         let solver = s.solver_ns[i].swap(0, Ordering::Relaxed);
         let pairs = s.pairs[i].swap(0, Ordering::Relaxed);
